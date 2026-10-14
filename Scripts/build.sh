@@ -12,13 +12,20 @@ fi
 if [[ -z "${DEVELOPER_DIR:-}" && -d /Applications/Xcode.app/Contents/Developer ]]; then
     export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 fi
-extra_flags=()
+xcodebuild_arguments=(
+    -quiet
+    -project FontHarbor.xcodeproj
+    -scheme FontHarbor
+    -configuration "$configuration"
+    -destination 'generic/platform=macOS'
+    -derivedDataPath "build/$configuration"
+    CODE_SIGNING_ALLOWED=NO
+    ONLY_ACTIVE_ARCH=NO
+    'ARCHS=arm64 x86_64'
+)
 # Optional workaround for build hosts that cannot launch a nested compiler sandbox.
 if [[ "${FONTHARBOR_MACRO_SANDBOX:-1}" == 0 ]]; then
-    extra_flags+=('OTHER_SWIFT_FLAGS=$(inherited) -disable-sandbox')
+    xcodebuild_arguments+=('OTHER_SWIFT_FLAGS=$(inherited) -disable-sandbox')
 fi
-xcodebuild -quiet -project FontHarbor.xcodeproj -scheme FontHarbor \
-    -configuration "$configuration" -destination 'generic/platform=macOS' \
-    -derivedDataPath "build/$configuration" CODE_SIGNING_ALLOWED=NO \
-    ONLY_ACTIVE_ARCH=NO 'ARCHS=arm64 x86_64' "${extra_flags[@]}" build
+xcodebuild "${xcodebuild_arguments[@]}" build
 printf 'Built build/%s/Build/Products/%s/Font Harbor.app (unsigned)\n' "$configuration" "$configuration"
