@@ -16,3 +16,4 @@
 - Preserve shared and installed custom fonts when removing a source.
 - Add tests, catalog validation, shared Xcode scheme, build scripts and CI.
 - Support macOS 26+ and compile in Swift 6 mode.
+- Publish unsigned development prereleases automatically from matching version tags.

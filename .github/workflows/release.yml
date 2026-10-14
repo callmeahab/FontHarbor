@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  publish-unsigned-development-build:
+    runs-on: macos-26
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Verify tag matches the app version
+        shell: bash
+        run: |
+          version="$(sed -nE 's/.*MARKETING_VERSION = ([0-9.]+);/\1/p' FontHarbor.xcodeproj/project.pbxproj | head -1)"
+          if [[ -z "$version" || "$GITHUB_REF_NAME" != "v$version" ]]; then
+            printf 'Tag %s must match MARKETING_VERSION v%s.\n' "$GITHUB_REF_NAME" "$version" >&2
+            exit 1
+          fi
+
+      - name: Test and package
+        run: Scripts/package_release.sh
+
+      - name: Publish unsigned development prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          cat > "$RUNNER_TEMP/release-notes.md" <<'EOF'
+          > [!WARNING]
+          > This is an unsigned, unnotarized development build. macOS may block it or display security warnings. It is intended for testing and evaluation, not normal end-user installation. Review the included source archive and build locally if preferred.
+
+          Font Harbor requires macOS 26 or later. This prerelease contains:
+
+          - An unsigned universal macOS app for Apple silicon and Intel Macs.
+          - The corresponding GPL-3.0-only source archive.
+          - SHA-256 checksums for both archives.
+
+          See `docs/RELEASING.md` for signing, notarization, and verification guidance.
+          EOF
+
+          gh release create "$GITHUB_REF_NAME" \
+            build/release/*.zip \
+            build/release/SHA256SUMS.txt \
+            --prerelease \
+            --verify-tag \
+            --title "Font Harbor ${GITHUB_REF_NAME#v} — unsigned development build" \
+            --notes-file "$RUNNER_TEMP/release-notes.md"

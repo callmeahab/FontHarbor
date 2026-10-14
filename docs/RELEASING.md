@@ -20,7 +20,7 @@ Review the staged files before committing. `.gitignore` excludes Xcode personal 
 3. Review the archives. The source archive uses an explicit file/directory allowlist and excludes personal Xcode data; it packages the current working files, so release from a clean, reviewed checkout.
 4. Run the UI and signed-installation checks in `CONTRIBUTING.md`. Test on macOS 26 and the latest supported macOS, including Intel if distributing that architecture. Unit tests do not verify user-session registration in other apps.
 
-The CI workflow runs these build and test commands on `macos-26` and uploads unsigned build artifacts. CI does not create a public GitHub release. The workflow has been prepared locally; its first hosted execution still needs verification.
+The CI workflow runs these build and test commands on `macos-26` and uploads unsigned build artifacts. Pushing a version tag such as `v1.0.0` also runs the Release workflow. The tag must match `MARKETING_VERSION`; after tests and packaging pass, the workflow creates a GitHub prerelease containing the unsigned universal app, corresponding source archive and checksums. The release prominently warns that the app is unsigned and unnotarized.
 
 ## Sign and notarize public binaries
 
@@ -30,7 +30,7 @@ Verify the exported artifact using `codesign --verify --deep --strict` and `spct
 
 ## Publish
 
-Tag the reviewed commit, publish release notes, and attach both the app archive and its matching source archive with checksums. The GPL license and third-party notices are included in the app download folder. Provide corresponding source from the exact version used for the binary; do not attach a source archive from a later working tree. Keep the generated icon source and catalog generation scripts available.
+Tag the reviewed commit with a version matching `MARKETING_VERSION`, then push the tag. The Release workflow publishes both the app archive and its matching source archive with checksums as an unsigned development prerelease. The GPL license and third-party notices are included in the app download folder. Provide corresponding source from the exact version used for the binary; do not replace it with a source archive from a later working tree. Keep the generated icon source and catalog generation scripts available.
 
 If only publishing source initially, omit the binary download and document the Xcode build steps.
 
