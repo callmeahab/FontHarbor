@@ -97,11 +97,19 @@ final class FontSourceDiscovery {
         let session = LanguageModelSession(instructions: """
             Recommend exactly one family from the supplied font catalog for the creative brief. Return its family name exactly as written. Consider tone, medium, readability, and category. Prefer an unexpected but defensible choice, and vary the choice when several families fit equally well.
             """)
+        #if compiler(>=6.4)
         let options = GenerationOptions(
             samplingMode: .random(probabilityThreshold: 0.9),
             temperature: 0.9,
             maximumResponseTokens: 80
         )
+        #else
+        let options = GenerationOptions(
+            sampling: .random(probabilityThreshold: 0.9),
+            temperature: 0.9,
+            maximumResponseTokens: 80
+        )
+        #endif
         let response = try await session.respond(
             to: "Creative brief: \(request)\n\nFont catalog:\n\(catalog)",
             generating: FontRecommendation.self,
